@@ -100,16 +100,19 @@ def deepupdate(original, update):
 
 
 class Charcoal(object):
-    def __init__(self, test, host, output_format=None):
+    def __init__(self, test, host, output_format=None, plugin_dir=None):
         """
 
         :rtype : object
         """
-
+        global manager
         self.passed = 0
         self.failed = 0
         self.duration_ms = 0
         try:
+            if plugin_dir and os.path.exists(plugin_dir):
+                manager.updatePluginPlaces([plugin_dir])
+                manager.collectPlugins()
             validictory.validate(test, SCHEMA)
             LOG.debug("Valid schema")
         except ValueError as error:

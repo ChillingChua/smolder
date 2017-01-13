@@ -3,7 +3,8 @@ import os
 import time
 import yaml
 import sys
-from smolder import Charcoal
+# from smolder import Charcoal
+from charcoal import Charcoal
 import logging
 import argh
 from yaml.parser import ParserError
@@ -74,6 +75,7 @@ SCHEMA = {
 @arg('host', help='IP address or DNS name to run tests against', default=os.environ.get('TEST_HOST'))
 @arg('testfile', default=os.environ.get('TEST_FILE'), metavar='TEST_FILE', nargs='?', help='The json file that details the tests to execute')
 @arg('--sleep', help='Sleep for a given amount of time before kicking off', default=0)
+@arg('--plugin_dir', help='Add custom plugin dir to execution', default=None)
 def smolder_cli(**kwargs):
     """ Parse CLI args and if valid dispatch to lower methods """
     all_tests = []
@@ -118,8 +120,7 @@ def smolder_cli(**kwargs):
     time.sleep(kwargs['sleep']) if 'sleep' in kwargs else time.sleep(0)
 
     for test in test_input['tests']:
-        test_obj = Charcoal(test=test, host=kwargs['host'])
-
+        test_obj = Charcoal(test=test, host=kwargs['host'], plugin_dir=kwargs.get('plugin_dir'))
         print(str(test_obj))
         total_failed_tests += test_obj.failed
         total_passed_tests += test_obj.passed
