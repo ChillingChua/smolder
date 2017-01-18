@@ -3,6 +3,7 @@ import os
 import time
 import yaml
 import sys
+import junit_xml
 # from smolder import Charcoal
 from charcoal import Charcoal
 import logging
@@ -57,7 +58,7 @@ SCHEMA = {
         "method": {
             "type": "string",
             "required": False,
-            "enum": ["GET", "get", "post", "POST", "put", "PUT", "delete", "DELETE", "option", "OPTION", "PURGE", "purge"]
+            "enum": ["GET", "get", "post", "POST", "put", "PUT", "delete", "DELETE", "options", "OPTIONS", "PURGE", "purge"]
         },
         "request_headers": {
             "type": "None",
@@ -73,14 +74,19 @@ SCHEMA = {
 
 @dispatch_command
 @arg('host', help='IP address or DNS name to run tests against', default=os.environ.get('TEST_HOST'))
-@arg('testfile', default=os.environ.get('TEST_FILE'), metavar='TEST_FILE', nargs='?', help='The json file that details the tests to execute')
+@arg('testfile', default=os.environ.get('TEST_FILE'), metavar='TEST_FILE', nargs='?',
+     help='The json file that details the tests to execute')
 @arg('--sleep', help='Sleep for a given amount of time before kicking off', default=0)
 @arg('--plugin_dir', help='Add custom plugin dir to execution', default=None)
+@arg('--xml_out', help='log XML test results', default=False)
+@arg('--xml_file', help='write XML test result to file', default=None)
 def smolder_cli(**kwargs):
     """ Parse CLI args and if valid dispatch to lower methods """
     all_tests = []
     total_passed_tests = 0
     total_failed_tests = 0
+    generate_xml = kwargs.get('xml_out', False) or kwargs.get('xml_file', False)
+    charcoal_xml_test_suites = []
 
     # Load the test specification file, parse the json and create a 'tests' object
     try:
@@ -120,16 +126,36 @@ def smolder_cli(**kwargs):
     time.sleep(kwargs['sleep']) if 'sleep' in kwargs else time.sleep(0)
 
     for test in test_input['tests']:
-        test_obj = Charcoal(test=test, host=kwargs['host'], plugin_dir=kwargs.get('plugin_dir'))
+        test_obj = Charcoal(test=test, host=kwargs['host'], plugin_dir=kwargs.get('plugin_dir'),
+                            generate_xml=generate_xml)
         print(str(test_obj))
         total_failed_tests += test_obj.failed
         total_passed_tests += test_obj.passed
+        if generate_xml:
+            # charcoal_xml_test_suites = test_obj.junit_test_cases
+            charcoal_xml_test_suites.append(test_obj.junit_test_suite)
         all_tests.append(test_obj)
 
     LOG.debug("Number of test objects: {0}".format(len(all_tests)))
     LOG.debug("failed: {0}, passed: {1}".format(total_failed_tests, total_passed_tests))
+
+    LOG.info('Execution finished ...')
+    if generate_xml:
+        # test_suite = [junit_xml.TestSuite("smolder test result", charcoal_xml_test_suites)]
+
+        if kwargs.get('xml_out'):
+            LOG.info('Logging test results')
+            LOG.info(junit_xml.TestSuite.to_xml_string(charcoal_xml_test_suites))
+
+        if kwargs.get('xml_file'):
+            LOG.info('saving xml test result to: {0}'.format(kwargs['xml_file']))
+            with open(kwargs['xml_file'], 'w') as f:
+                junit_xml.TestSuite.to_file(f, charcoal_xml_test_suites, prettyprint=True)
+                f.close()
+
     if total_failed_tests > 0:
-        print("FOUND {0} FAILURES IN {1} TESTS".format(str(total_failed_tests), str(total_passed_tests + total_failed_tests)))
+        print("FOUND {0} FAILURES IN {1} TESTS".format(str(total_failed_tests),
+                                                       str(total_passed_tests + total_failed_tests)))
         sys.exit(1)
     elif total_failed_tests == 0 and total_passed_tests == 0:
         print("No tests run: check plugins")

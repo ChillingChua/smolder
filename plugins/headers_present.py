@@ -1,12 +1,11 @@
-from yapsy.IPlugin import IPlugin
 import logging
+from charcoal.smolder_plugin import SmolderPlugin
 LOG = logging.getLogger('smolder')
 
 
-class HeadersPresent(IPlugin):
+class HeadersPresent(SmolderPlugin):
 
-    @staticmethod
-    def run(req):
+    def run(self, req):
         for header in req.test['response_headers_present']:
             if header not in req.req.headers:
                 return req.fail_test("Expected header {0} not present".format(header))

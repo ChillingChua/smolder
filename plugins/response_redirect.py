@@ -1,13 +1,12 @@
-from yapsy.IPlugin import IPlugin
 import logging
 import re
+from charcoal.smolder_plugin import SmolderPlugin
 LOG = logging.getLogger('smolder')
 
 
-class ResponseRedirect(IPlugin):
+class ResponseRedirect(SmolderPlugin):
 
-    @staticmethod
-    def run(req):
+    def run(self, req):
         if "30" in str(req.req.status_code):
             match = re.match(req.test['outcomes']['response_redirect'], req.req.headers['location'])
             if match:

@@ -1,13 +1,11 @@
-from yapsy.IPlugin import IPlugin
 import logging
+from charcoal.smolder_plugin import SmolderPlugin
 LOG = logging.getLogger('smolder')
 
 
-class ResponseBodyDoesntContain(IPlugin):
+class ResponseBodyDoesntContain(SmolderPlugin):
 
-    @staticmethod
-    def run(req):
-
+    def run(self, req):
         # Do we need to ensure something does NOT appear in the response body?
         banned_text = req.test['outcomes']['response_body_doesnt_contain']
         try:

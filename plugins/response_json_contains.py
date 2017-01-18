@@ -1,13 +1,12 @@
-from yapsy.IPlugin import IPlugin
 import dpath
 import logging
+from charcoal.smolder_plugin import SmolderPlugin
 LOG = logging.getLogger('smolder')
 
 
-class ResponseJsonContains(IPlugin):
+class ResponseJsonContains(SmolderPlugin):
 
-    @staticmethod
-    def run(req):
+    def run(self, req):
         # Validate presence of partial dicts in response json
         for path in list(req.test['outcomes']['response_json_contains'].keys()):
             expected_value = req.test['outcomes']['response_json_contains'][path]

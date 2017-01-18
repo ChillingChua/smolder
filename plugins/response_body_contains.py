@@ -1,12 +1,11 @@
-from yapsy.IPlugin import IPlugin
 import logging
+from charcoal.smolder_plugin import SmolderPlugin
 LOG = logging.getLogger('smolder')
 
 
-class ResponseBodyContains(IPlugin):
+class ResponseBodyContains(SmolderPlugin):
 
-    @staticmethod
-    def run(req):
+    def run(self, req):
         # Did we expect something specific in the response body?
         required_text = req.test['outcomes']['response_body_contains']
         LOG.debug(required_text)

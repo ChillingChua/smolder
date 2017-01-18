@@ -1,14 +1,12 @@
-from yapsy.IPlugin import IPlugin
 import logging
 import re
+from charcoal.smolder_plugin import SmolderPlugin
 LOG = logging.getLogger('smolder')
 
 
-class ResponseHeaderValueContains(IPlugin):
+class ResponseHeaderValueContains(SmolderPlugin):
 
-    @staticmethod
-    def run(req):
-
+    def run(self, req):
         for header in req.test['outcomes']['response_header_value_contains']:
             if header not in req.req.headers:
                 return req.fail_test("Expected header {0} not present".format(header))

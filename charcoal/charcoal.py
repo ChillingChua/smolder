@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import os
+from junit_xml import TestCase, TestSuite
 import time
 import logging
 import warnings
@@ -9,7 +10,6 @@ import jsonpickle
 import requests
 import validictory
 from yapsy.PluginManager import PluginManager
-
 from . import COLOURS, get_verify, get_host_overrides, tcptest
 from .output import Output
 
@@ -18,12 +18,13 @@ THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 
 logging.basicConfig(format=FORMAT, level=logging.ERROR, datefmt="%Y-%m-%d %H:%M:%S")
 LOG = logging.getLogger('smolder')
+
 REQUESTS_LOG = logging.getLogger('requests')
 REQUESTS_LOG.setLevel(logging.ERROR)
 
 logging.getLogger('yapsy').setLevel(logging.INFO)
 manager = PluginManager()
-manager.setPluginPlaces([THIS_DIR, "~/.smolder_plugins"])
+manager.setPluginPlaces([THIS_DIR + '/../plugins', "~/.smolder_plugins"])
 manager.collectPlugins()
 
 OUTPUT_WIDTH = 108
@@ -70,7 +71,7 @@ SCHEMA = {
         "method": {
             "type": "string",
             "required": False,
-            "enum": ["GET", "get", "post", "POST", "put", "PUT", "delete", "DELETE", "option", "OPTION", "PURGE", "purge"]
+            "enum": ["GET", "get", "post", "POST", "put", "PUT", "delete", "DELETE", "options", "OPTIONS", "PURGE", "purge"]
         },
         "request_headers": {
             "type": "None",
@@ -100,7 +101,8 @@ def deepupdate(original, update):
 
 
 class Charcoal(object):
-    def __init__(self, test, host, output_format=None, plugin_dir=None):
+
+    def __init__(self, test, host, output_format=None, plugin_dir=None, generate_xml=False):
         """
 
         :rtype : object
@@ -109,6 +111,10 @@ class Charcoal(object):
         self.passed = 0
         self.failed = 0
         self.duration_ms = 0
+        self.req = None
+        self.generate_xml = generate_xml
+        self.junit_test_cases = []  # only used if xml_out is True
+        self.junit_test_suite = None
         try:
             if plugin_dir and os.path.exists(plugin_dir):
                 manager.updatePluginPlaces([plugin_dir])
@@ -206,7 +212,7 @@ class Charcoal(object):
                 start = int(round(time.time() * 1000))
                 try:
                     self.req = requests.request(self.test['method'].upper(), verify=self.verify, **self.inputs)
-                except (requests.exceptions.SSLError) as e:
+                except requests.exceptions.SSLError as e:
                     message, status = self.fail_test("Certificate verify failed and not ignored by inputs['verify']: %s" % (str(e)))
                     self.add_output("SSLVerify", message, status)
                     return
@@ -222,6 +228,7 @@ class Charcoal(object):
                     else:
                         message, status = self.warn_test("Insecure request made and ignored")
                         self.add_output("SecureRequest", message, status)
+
         if self.test["protocol"] != 'tcp':
             self.output.append(dict(self.req.headers), sec='response_headers')
             self.output.append(self.req.status_code, sec='response_status_code')
@@ -239,6 +246,15 @@ class Charcoal(object):
                         message, status = plugin_info.plugin_object.run(self)
                         self.add_output(plugin_info.name, message, status)
                         manager.deactivatePluginByName(plugin_info.name)
+                        if self.generate_xml:
+                            text = self.req.content
+                            self.junit_test_cases.append(TestCase(outcome,
+                                                                  'None',
+                                                                  self.duration_ms,
+                                                                  self.passed and text or None,
+                                                                  not self.failed and text or None))
+                        self.junit_test_suite = TestSuite(self.test['name'], self.junit_test_cases)
+                        pass
 
     def __str__(self):
         return str(self.output)

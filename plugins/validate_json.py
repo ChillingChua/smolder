@@ -1,5 +1,5 @@
-from yapsy.IPlugin import IPlugin
 import validictory
+from yapsy.IPlugin import IPlugin
 
 
 class ValidateJson(IPlugin):

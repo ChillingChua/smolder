@@ -1,0 +1,9 @@
+[Core]
+Name = response_contains
+Module = response_contains
+
+[Documentation]
+Author = Andreas Werner
+Version = 0.1
+Website = ''
+Description = Plugin to check for a substring in stringified body, useful if repsonse body is not JSON type

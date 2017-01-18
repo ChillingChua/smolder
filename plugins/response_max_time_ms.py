@@ -1,13 +1,11 @@
-from yapsy.IPlugin import IPlugin
 import logging
+from charcoal.smolder_plugin import SmolderPlugin
 LOG = logging.getLogger('smolder')
 
 
-class ResponseMaxTimeMs(IPlugin):
+class ResponseMaxTimeMs(SmolderPlugin):
 
-    @staticmethod
-    def run(req):
-
+    def run(self, req):
         # Check response time
         if req.duration_ms > int(req.test['outcomes']['response_max_time_ms']):
             longer_by_ms = req.duration_ms - int(req.test['outcomes']['response_max_time_ms'])

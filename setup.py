@@ -30,6 +30,7 @@ REQUIRES = [
     'validictory >= 1.0.0',
     'nose >= 1.3.7',
     'httpretty == 0.8.10',
+    'junit_xml==1.7',
 ]
 
 with open('README.md', 'r') as f:
