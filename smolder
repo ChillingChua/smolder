@@ -139,7 +139,6 @@ def smolder_cli(**kwargs):
     LOG.debug("Number of test objects: {0}".format(len(all_tests)))
     LOG.debug("failed: {0}, passed: {1}".format(total_failed_tests, total_passed_tests))
 
-    LOG.info('Execution finished ...')
     if generate_xml:
         # test_suite = [junit_xml.TestSuite("smolder test result", charcoal_xml_test_suites)]
 

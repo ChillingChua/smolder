@@ -245,16 +245,21 @@ class Charcoal(object):
                         manager.activatePluginByName(plugin_info.name)
                         message, status = plugin_info.plugin_object.run(self)
                         self.add_output(plugin_info.name, message, status)
-                        manager.deactivatePluginByName(plugin_info.name)
                         if self.generate_xml:
-                            text = self.req.content
-                            self.junit_test_cases.append(TestCase(outcome,
-                                                                  'None',
-                                                                  self.duration_ms,
-                                                                  self.passed and text or None,
-                                                                  not self.failed and text or None))
-                        self.junit_test_suite = TestSuite(self.test['name'], self.junit_test_cases)
-                        pass
+                            self.junit_test_cases.append(self.get_test_case(outcome, message))
+                            self.junit_test_suite = TestSuite(self.test['name'], self.junit_test_cases)
+                        manager.deactivatePluginByName(plugin_info.name)
+
+    def get_test_case(self, outcome, message):
+        tc = TestCase(self.test['name'],
+                      outcome,
+                      self.duration_ms)
+        if self.failed != 0:
+            tc.add_error_info(message)
+            tc.is_error()
+        else:
+            tc.stdout = message
+        return tc
 
     def __str__(self):
         return str(self.output)
